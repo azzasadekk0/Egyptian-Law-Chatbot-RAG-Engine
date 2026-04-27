@@ -1,4 +1,4 @@
-# Egyptian Legal Chatbot_RAG Engine
+# Egyptian Law Chatbot_RAG Engine
 
 A **Retrieval-Augmented Generation (RAG)** system that answers Arabic legal questions about Egyptian law with grounded citations — covering **Civil**, **Penal**, **Commercial**, and **Personal Status** law.
 
