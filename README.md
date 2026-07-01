@@ -1,6 +1,6 @@
-# Egyptian Law Chatbot_RAG Engine
+# Egyptian Law Chatbot — RAG Engine
 
-A **Retrieval-Augmented Generation (RAG)** system that answers Arabic legal questions about Egyptian law with grounded citations — covering **Civil**, **Penal**, **Commercial**, and **Personal Status** law.
+A **Retrieval-Augmented Generation (RAG)** system that answers Arabic legal questions about Egyptian law with grounded citations covering **Civil**, **Penal**, **Commercial**, and **Personal Status** law.
 
 ---
 
@@ -8,8 +8,8 @@ A **Retrieval-Augmented Generation (RAG)** system that answers Arabic legal ques
 
 - **Domain-Aware Routing:** Automatically classifies queries into 4 legal domains using a custom KNN classifier.
 - **Adaptive Hybrid Retrieval:** Combines FAISS (dense) and BM25 (sparse) with Reciprocal Rank Fusion (RRF) for high-precision semantic and keyword matching.
-- **Conversational Memory:** Seamlessly handles ambiguous follow-up questions (e.g., "ولو رفض؟") using zero-latency heuristic detection and LLM resolution.
-- **Strict Grounding:** Zero hallucination policy. The system cites exact articles and falls back to a standard refusal if evidence is missing.
+- **Conversational Memory:** Seamlessly handles ambiguous follow-up questions (e.g., "ولو رفض؟") using lightweight heuristic detection and LLM resolution.
+- **Strict Grounding:** Strict evidence-based answering with fallback refusal when supporting legal evidence is not found.
 - **Cross-Encoder Reranking:** Re-scores the top 15 hybrid results down to the top 3 most relevant chunks using a multilingual cross-encoder.
 
 ---
@@ -22,10 +22,10 @@ Every query goes through 7 stages:
 1. **Memory** — detect ambiguous follow-ups and resolve them using conversation history
 2. **Classify** — route the query to a legal domain (civil / penal / commercial / personal_status)
 3. **Route** — search that domain's chunks; fall back to full corpus if classifier confidence is low
-4. **Rewrite** — expand short/ambiguous phrasing into formal legal terminology (GPT-4o)
+4. **Rewrite** — expand short/ambiguous phrasing into formal legal terminology (LLM-based query rewriting)
 5. **Retrieve** — top-15 results from FAISS (semantic) + BM25 (keyword), merged with RRF
 6. **Rerank** — multilingual cross-encoder narrows 15 → 3 highest-relevance chunks
-7. **Generate** — GPT-4o produces a grounded Arabic answer with citations (temperature 0)
+7. **Generate** — LLM-based grounded answer generation producing an Arabic answer with citations (temperature 0)
 
 ---
 
@@ -35,7 +35,7 @@ Every query goes through 7 stages:
 ├── RAG_Engine/
 │   ├── config.py        ← all settings and paths
 │   ├── classifier.py    ← domain classifier (KNN + keyword boost)
-│   ├── retriever.py     ← FAISS + BM25 hybrid retrieval with Arabic normalisation
+│   ├── retriever.py     ← FAISS + BM25 hybrid retrieval with Arabic normalization
 │   ├── reranker.py      ← cross-encoder reranker
 │   ├── generator.py     ← follow-up resolver + query rewriter + answer generator
 │   ├── citations.py     ← citation formatter
@@ -44,15 +44,15 @@ Every query goes through 7 stages:
 │   └── run.py           ← CLI entrypoint
 │
 ├── NLP_ML_Pipeline-main/
-│   ├── chunks_with_embeddings.jsonl   ← 742 legal chunks + embeddings
-│   ├── embeddings_matrix.npy          ← (742 × 768) float32 matrix
-│   ├── knn_classifier_final.pkl       ← trained classifier (sklearn 1.6.1)
+│   ├── chunks_with_embeddings.jsonl   ← legal chunks + embeddings
+│   ├── embeddings_matrix.npy          ← dense embeddings matrix
+│   ├── knn_classifier_final.pkl       ← trained domain classifier
 │   └── chunks_cleaned.jsonl           ← text + metadata only
 │
 ├── tests/
-│   ├── healthcheck.py   ← fast component check, no API call needed
+│   ├── healthcheck.py   ← fast component check, no Groq API call required
 │   ├── evaluation.py    ← 25-question evaluation (Recall@K, MRR, Hit Rate)
-│   └── system.py        ← full 66-check system test covering all 7 stages
+│   └── system.py        ← full system test covering all pipeline stages
 └── requirements.txt
 ```
 
@@ -60,7 +60,7 @@ Every query goes through 7 stages:
 
 ## Setup
 
-**Requirements:** Python 3.12+, an OpenAI API key with GPT-4o access.
+**Requirements:** Python 3.11+, a Groq API key with access to llama-3.3-70b-versatile.
 
 ```bash
 # 1. Create and activate a virtual environment
@@ -72,7 +72,7 @@ python -m venv .venv
 pip install -r requirements.txt
 
 # 3. Add your API key
-echo OPENAI_API_KEY=sk-...your-key... > .env
+echo GROQ_API_KEY=gsk_...your-key... > .env
 ```
 
 ---
@@ -104,51 +104,31 @@ python RAG_Engine/run.py --interactive --no-rewrite
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # macOS / Linux
 
-# Test 1: Smoke test (no API call, ~30s on first run)
-python Tests/healthcheck.py
+# Test 1: Smoke test (no API call)
+python tests/healthcheck.py
 # Validates: embedding model, classifier, retriever, reranker
-# No OpenAI API call — safe to run offline
+# No Groq API call required. Local models must be available or already cached.
 
-# Test 2: Full system test (requires API key, ~3-5 min) 
-python Tests/system.py
-# Runs 66 checks across all 7 stages including conversational memory
-# Prints a scorecard at the end — look for "ALL CHECKS PASSED"
+# Test 2: Full system test (requires API key)
+python tests/system.py
+# Runs automated end-to-end checks across all pipeline stages including conversational memory
+# Prints a scorecard at the end
 
-# Test 3: Benchmark evaluation (requires API key, ~10-15 min) 
-python Tests/evaluation.py
+# Test 3: Benchmark evaluation (requires API key)
+python tests/evaluation.py
 # Evaluates 25 legal questions with Recall@K, MRR, Hit Rate, groundedness
 # Prints an ablation table: WITH vs WITHOUT query rewriting
 ```
 
-## Performance / Evaluation
+## Evaluation
 
-The system is continuously evaluated using our testing suites (`Tests/evaluation.py` and `Tests/system.py`):
+The project includes testing and evaluation scripts to validate the main RAG components:
 
-- **System Reliability:** **66/67 automated checks passed (99% pass rate)** across end-to-end system validation covering retrieval, memory, reranking, and generation.
-- **Retrieval Metrics:** Evaluated using **Recall@K**, **MRR**, and **Hit Rate** with comparative testing **with vs without query rewriting** to measure retrieval effectiveness.
-- **Latency:** **Sub-second local retrieval** after cache warm-up. Total end-to-end response time varies depending on OpenAI API latency and query complexity.
----
+- `tests/healthcheck.py` — checks core local components without requiring a Groq API call.
+- `tests/system.py` — runs end-to-end system checks across the full pipeline.
+- `tests/evaluation.py` — evaluates retrieval quality using Recall@K, MRR and Hit Rate.
 
-## Python API
-
-```python
-from RAG_Engine import EgyptianLegalRAG
-
-rag = EgyptianLegalRAG()   # loads all models once
-
-# Stateless query
-result = rag.query("ما عقوبة السرقة في القانون المصري؟")
-print(result.answer)
-print(result.citations)
-
-# Multi-turn conversation with memory
-r1 = rag.query("ما شروط الحضانة بعد الطلاق؟",  session_id="user_1")
-r2 = rag.query("ولو رفض الأب؟",                session_id="user_1")  # auto-resolved
-r3 = rag.query("ولو الأب سافر للخارج؟",         session_id="user_1")  # auto-resolved
-
-# Clear session history
-rag.clear_session("user_1")
-```
+Latency depends on local model cache status, hardware and Groq API response time.
 
 ---
 
@@ -157,7 +137,7 @@ rag.clear_session("user_1")
 
 | Setting | Default | What it controls |
 |---|---|---|
-| `LLM_MODEL` | `gpt-4o` | OpenAI model |
+| `LLM_MODEL` | `llama-3.3-70b-versatile` | Groq LLM model |
 | `CONFIDENCE_THRESHOLD` | `0.35` | Below this → full-corpus search |
 | `DENSE_TOP_K` | `15` | FAISS candidates per query |
 | `SPARSE_TOP_K` | `15` | BM25 candidates per query |

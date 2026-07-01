@@ -6,7 +6,7 @@ scikit-learn==1.6.1       # PINNED — must match knn_classifier_final.pkl
 numpy>=1.24.0
 
 # LLM + Langchain
-langchain-openai>=0.2.0
+langchain-groq>=0.2.0
 langchain-core>=0.3.0
 openai>=1.0.0
 

@@ -36,17 +36,17 @@ REWRITE_MAX_TOKENS = 60   # very long queries already carry enough context
 
 RERANKER_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 
-LLM_MODEL       = "gpt-4o"
+LLM_MODEL       = "llama-3.3-70b-versatile"
 LLM_TEMPERATURE = 0.0    # deterministic — legal answers must be grounded
 LLM_MAX_TOKENS  = 1024
 
 load_dotenv(ROOT_DIR / ".env")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
-if not OPENAI_API_KEY:
+if not GROQ_API_KEY:
     raise EnvironmentError(
-        "OPENAI_API_KEY not found. "
-        "Create a .env file in the project root with: OPENAI_API_KEY=sk-..."
+        "GROQ_API_KEY not found. "
+        "Create a .env file in the project root with: GROQ_API_KEY=gsk_..."
     )
 
 WEAK_EVIDENCE_MSG = (

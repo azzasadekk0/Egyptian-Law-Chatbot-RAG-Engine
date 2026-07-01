@@ -57,7 +57,7 @@ def test_imports(sec):
     from RAG_Engine.config import (
         ROOT_DIR, NLP_DIR, CACHE_DIR, FAISS_INDEX_CACHE,
         CHUNKS_WITH_EMBEDDINGS, EMBEDDINGS_MATRIX, CLASSIFIER_PKL,
-        OPENAI_API_KEY, EMBEDDING_MODEL_NAME,
+        GROQ_API_KEY, EMBEDDING_MODEL_NAME,
         REWRITE_MIN_TOKENS, REWRITE_MAX_TOKENS,
         DENSE_TOP_K, SPARSE_TOP_K,
     )
@@ -72,7 +72,7 @@ def test_imports(sec):
     check("chunks_with_embeddings.jsonl found", CHUNKS_WITH_EMBEDDINGS.exists())
     check("embeddings_matrix.npy found", EMBEDDINGS_MATRIX.exists())
     check("knn_classifier_final.pkl found", CLASSIFIER_PKL.exists())
-    check("OPENAI_API_KEY is set", bool(OPENAI_API_KEY) and OPENAI_API_KEY.startswith("sk-"))
+    check("GROQ_API_KEY is set", bool(GROQ_API_KEY) and GROQ_API_KEY.startswith("gsk_"))
     check("No hardcoded absolute path (portable)", ROOT_DIR.exists())
     check("Package version is 1.1.0", __version__ == "1.1.0")
     check("REWRITE_MIN_TOKENS=3, MAX=60",

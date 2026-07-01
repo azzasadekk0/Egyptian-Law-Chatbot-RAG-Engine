@@ -1,9 +1,9 @@
 import logging
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from RAG_Engine.config import (
-    OPENAI_API_KEY,
+    GROQ_API_KEY,
     LLM_MODEL,
     LLM_TEMPERATURE,
     LLM_MAX_TOKENS,
@@ -57,13 +57,13 @@ ANSWER_SYSTEM_PROMPT = """\
 
 class LegalGenerator:
     """
-    Handles query rewriting and grounded answer generation via ChatOpenAI.
+    Handles query rewriting and grounded answer generation via ChatGroq.
     """
 
     def __init__(self) -> None:
-        logger.info(f"Initializing ChatOpenAI — model={LLM_MODEL}")
-        self.llm = ChatOpenAI(
-            api_key=OPENAI_API_KEY,
+        logger.info(f"Initializing ChatGroq — model={LLM_MODEL}")
+        self.llm = ChatGroq(
+            api_key=GROQ_API_KEY,
             model=LLM_MODEL,
             temperature=LLM_TEMPERATURE,
             max_tokens=LLM_MAX_TOKENS,
